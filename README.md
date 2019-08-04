@@ -1,2 +1,2 @@
-# data-viz
+# Narrative Visualization
 Narrative Visualization
