@@ -12,29 +12,50 @@ const cardTitleDefault = 'World';
 let selectedHealthWorkforceCategory = 'medical_doctors';
 let selectedDisplayDoctorsBy = 'medical_doctors_per_10000';
 
+let selectedStartYear = null;
+let selectedEndYear = null;
+
+let medicalProffesionalsData = null;
+
 async function displayScene(healthWorkforceCategory) {
     selectedHealthWorkforceCategory = healthWorkforceCategory;
     selectedDisplayDoctorsBy = document.getElementById("doctorsBy").value;
+    selectedStartYear = null;
+    selectedEndYear = null;
+    // add active class to selected item
+    updateNavItemClass(selectedHealthWorkforceCategory);
     await loadScene();
 }
 
-async function updateScene() {
+function updateScene() {
     selectedDisplayDoctorsBy = document.getElementById("doctorsBy").value;
-    await loadScene();
+    displayChart();
+}
+
+function updateYears(start, end) {
+    selectedStartYear = start;
+    selectedEndYear = end;
+    displayChart();
+}
+
+function updateCountry() {
+    selectedCountry = document.getElementById("country").value;
+    const countries = d3.selectAll("path." + selectedCountry.replace(/\s/g, '_'));
+    countries.classed('highlight', true);
 }
 
 async function loadScene() {
     healthWorkforceCategory = selectedHealthWorkforceCategory;
+    // fetch data
+    csv = healthWorkforceCategory + ".csv";
+    medicalProffesionalsData = await d3.csv(csv);
+    displayChart();
+}
+
+const displayChart = () => {
 
     // clear svg
     document.querySelector('#scene').innerHTML = '';
-
-    // add active class to selected item
-    updateNavItemClass(selectedHealthWorkforceCategory);
-
-    // fetch data
-    csv = healthWorkforceCategory + ".csv";
-    const medicalProffesionalsData = await d3.csv(csv);
 
     // display chart
     const width = 925;
@@ -45,10 +66,11 @@ async function loadScene() {
     const contryWisePathData = getContryWisePathData(medicalProffesionalsByCountries, selectedDisplayDoctorsBy);
     const minMaxData = getMinMaxData(medicalProffesionalsByCountries, selectedDisplayDoctorsBy);
 
-    const startYear = minMaxData.startYear;
-    const endYear = minMaxData.endYear;
+    const startYear = selectedStartYear || minMaxData.startYear;
+    const endYear = selectedEndYear || minMaxData.endYear;
     let minMedicalDoctors = minMaxData.minDoctors;
     const maxMedicalDoctors = minMaxData.maxDoctors;
+    const years = d3.range(startYear, endYear);
 
     if (minMedicalDoctors < 1) {
         minMedicalDoctors = 0.001;
@@ -65,12 +87,13 @@ async function loadScene() {
         let sum = 0;
         d.forEach(docs => { sum += docs.y });
         const averageDocs = (sum / d.length);
-        document.querySelector('.sidenav').innerHTML = `
-        <p>The country <strong>${country}</strong> has on average ${averageDocs.toFixed(2)} doctors overs years.</div>`;
+        document.querySelector('.sub-details').innerHTML = `
+         <p>The country <strong>${country}</strong> has on average ${averageDocs.toFixed(2)} doctors overs years.</div>`;
 
         const xVal = (d) => { return xScale(d.x); };
         const yVal = (d) => { return yScale(d.y); };
 
+        d3.select(".tooltip").style("display", 'block');
         d3.select(".tooltip").transition().duration(100).style("opacity", .9);
         d3.select(".tooltip")
             .html(`<div>${country} has on average ${averageDocs.toFixed(2)} doctors overs years.</div>`)
@@ -91,15 +114,18 @@ async function loadScene() {
             .style("fill", function (d) {
                 return 'white';
             });
+
+        displaySubChart(d);
     };
 
     const onmouseout = function (d, i) {
         var currClass = d3.select(this).attr("class");
         var prevClass = currClass.substring(0, currClass.length - 8);
         d3.select(this).attr("class", prevClass);
-        document.querySelector('.sidenav').innerHTML = `<p>${healthWorkforce[healthWorkforceCategory]} by number and per 10,000 population per year per country.</p>`;
+        document.querySelector('.sub-details').innerHTML = ``;
+        document.querySelector('.sub-graph').innerHTML = ``;
         chart.selectAll("circle").remove();
-        d3.select(".tooltip").style("opacity", 0);
+        d3.select(".tooltip").style("display", 'none');
     };
 
     const chart = d3.select("#scene")
@@ -116,6 +142,7 @@ async function loadScene() {
         chart.append("path")
             .data([contryWisePathData[idx].pathData])
             .attr("country", contryWisePathData[idx].country)
+            .attr("class", contryWisePathData[idx].country.replace(/\s/g, '_'))
             .attr("d", line)
             .on("mouseover", onmouseover)
             .on("mouseout", onmouseout);
@@ -187,8 +214,9 @@ async function loadScene() {
         .attr("transform", "rotate(-90)")
         .text("Doctors");
 
-    document.querySelector('.sidenav').innerHTML = `<p>${healthWorkforce[healthWorkforceCategory]} by number and per 10,000 population per year per country.</p>`;
+    document.querySelector('.details').innerHTML = `<p>Chart on the right shows ${healthWorkforce[healthWorkforceCategory]} by number and per 10,000 population per year per country which helps in understanding how many doctors are there per country.</p>`;
 
+    createCountriesSelectDropDown(medicalProffesionalsByCountries);
 }
 
 const updateNavItemClass = (id) => {
@@ -198,6 +226,15 @@ const updateNavItemClass = (id) => {
             link.classList.add('active')
         } else {
             link.classList.remove('active');
+        }
+    });
+
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        if (input.id === 'btn-'+id) {
+            input.checked = true;
+        } else {
+            input.checked = false;
         }
     });
 
@@ -234,6 +271,17 @@ const getContryWisePathData = (medicalProffesionalsByCountries, category) => {
     });
     return contryWisePathData;
 };
+
+const createCountriesSelectDropDown = (medicalProffesionalsByCountries) => {
+    const contryWisePathData = [];
+    const keys = Object.keys(medicalProffesionalsByCountries)
+    let options = `<option value="select">Select</option>`;
+    keys.forEach((key) => {
+        options += `<option value="${key}">${key}</option>`;
+    });
+    document.querySelector('#country').innerHTML = options;
+};
+
 
 const getMinMaxData = (medicalProffesionalsByCountries, category) => {
     let startYear = 2020;
@@ -272,4 +320,86 @@ const getMinMaxData = (medicalProffesionalsByCountries, category) => {
 };
 
 
-// loop through data
+
+const displaySlider = () => {
+
+    const years = d3.range(1930, 2020);
+
+    const sliderRange = d3
+        .sliderBottom()
+        .min(d3.min(years))
+        .max(d3.max(years))
+        .width(300)
+        .tickFormat(d3.format('d'))
+        .ticks(5)
+        .default([years[0], years[years.length - 1]])
+        .fill('#2196f3')
+        .on('onchange', val => {
+            updateYears(d3.format("d")(+val[0]), d3.format("d")(+val[1]));
+        });
+
+    const gRange = d3
+        .select('#slider')
+        .append('svg')
+        .attr('width', 400)
+        .attr('height', 100)
+        .append('g')
+        .attr('transform', 'translate(30,30)');
+
+    gRange.call(sliderRange);
+}
+
+
+const displaySubChart = (data) => {
+
+    console.log(data);
+
+    //sort bars based on value
+    data = data.sort(function (a, b) {
+        return a.x - b.x;
+    })
+
+    //set up svg using margin conventions - we'll need plenty of room on the left for labels
+    var margin = {
+        top: 10,
+        right: 15,
+        bottom: 10,
+        left: 40
+    };
+
+    var width = 200 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+
+    var svg = d3.select(".sub-graph")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    // set the ranges
+    var y = d3.scaleBand()
+        .range([height, 0])
+        .padding(0.1);
+
+    var x = d3.scaleLinear()
+        .range([0, width]);
+
+    x.domain([0, d3.max(data, function (d) { return d.y; })])
+    y.domain(data.map(function (d) { return d.x; }));
+
+    // append the rectangles for the bar chart
+    svg.selectAll(".bar")
+        .data(data)
+        .enter().append("rect")
+        .attr("class", "bar")
+        //.attr("x", function(d) { return x(d.sales); })
+        .attr("width", function (d) { return x(d.y); })
+        .attr("y", function (d) { return y(d.x); })
+        .attr("height", y.bandwidth());
+
+    // add the y Axis
+    svg.append("g")
+        .call(d3.axisLeft(y));
+}
