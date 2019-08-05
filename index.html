@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Narrative Visualisation - Global Health Workforce</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="./narrative-visualisaton.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@clr/ui/clr-ui.min.css" />
+    <link href='./narrative-visualisaton.css' rel='stylesheet' type='text/css'>
+</head>
+
+<body onload="displayScene('medical_doctors');">
+    <div class="main-container">
+        <header class="header-6">
+            <div class="branding">
+                <span class="title">Global Health Workforce</span>
+            </div>
+        </header>
+
+        <nav class="subnav">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" id="medical-doctors"
+                        onclick="displayScene('medical_doctors');">Medical Doctors</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="nursing-midwifery"
+                        onclick="displayScene('nursing-midwifery');">Nursing
+                        and midwifery personnel</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="dentistry" onclick="displayScene('dentistry');">Dentistry
+                        personnel</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="pharmaceutical"
+                        onclick="displayScene('pharmaceutical');">Pharmaceutical personnel</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="medical-doctors"
+                        onclick="displayScene('medical-doctors');">Pharmaceutical personnels</a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="content-container">
+            <div class="content-area">
+                <!-- <div id="info">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"></h5>
+                            <p class="card-text"></p>
+                        </div>
+                    </div>
+                </div> -->
+                <select id="doctorsBy" onchange="updateScene()">
+                    <option value="medical_doctors_by_number">By Number of Doctors</option>
+                    <option value="medical_doctors_per_10000">By Doctors Per 10,000 population</option>
+                </select>
+
+                <div id="scene"></div>
+            </div>
+            <nav class="sidenav">
+                Side Nav
+            </nav>
+        </div>
+    </div>
+
+    <div role="tooltip" aria-haspopup="true" class="tooltip tooltip-right">
+    </div>
+
+</body>
+
+</html>
