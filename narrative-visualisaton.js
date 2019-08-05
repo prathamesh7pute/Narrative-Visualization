@@ -101,19 +101,19 @@ const displayChart = () => {
             .style("left", (d3.event.pageX + 10) + "px")
             .style("position", "absolute");
 
-        const dots = chart.selectAll("circle")
-            .data(d)
-            .enter()
-            .append("circle")
-            .attr("r", 2)
-            .attr("cx", xVal)
-            .attr("cy", yVal)
-            .style("stroke", function (d) {
-                return '#be1932';
-            })
-            .style("fill", function (d) {
-                return 'white';
-            });
+        // const dots = chart.selectAll("circle")
+        //     .data(d)
+        //     .enter()
+        //     .append("circle")
+        //     .attr("r", 2)
+        //     .attr("cx", xVal)
+        //     .attr("cy", yVal)
+        //     .style("stroke", function (d) {
+        //         return '#be1932';
+        //     })
+        //     .style("fill", function (d) {
+        //         return 'white';
+        //     });
 
         displaySubChart(d);
     };
