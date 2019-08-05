@@ -1,7 +1,10 @@
 
 const healthWorkforce = {
     'medical_doctors': 'Medical doctors',
-    'nursing-midwifery': 'Nursing and midwifery personnel',
+    'nursing_midwifery': 'Nursing and midwifery personnel',
+    'dentistry_personnel': 'Dentists',
+    'pharmaceutical_personnel': 'Pharmacists',
+    'physiotherapy_personnel': 'Physiotherapists',
 };
 
 const cardTitleDefault = 'World';
@@ -28,7 +31,7 @@ async function loadScene() {
 
     // add active class to selected item
     updateNavItemClass(selectedHealthWorkforceCategory);
-    
+
     // fetch data
     csv = healthWorkforceCategory + ".csv";
     const medicalProffesionalsData = await d3.csv(csv);
@@ -47,9 +50,9 @@ async function loadScene() {
     let minMedicalDoctors = minMaxData.minDoctors;
     const maxMedicalDoctors = minMaxData.maxDoctors;
 
-    if(minMedicalDoctors < 1) {
-        minMedicalDoctors = 0.1;
-    } 
+    if (minMedicalDoctors < 1) {
+        minMedicalDoctors = 0.001;
+    }
 
     const yScale = d3.scaleLog().base(10).domain([maxMedicalDoctors, minMedicalDoctors]).range([margin, height - margin]);
     const xScale = d3.scaleLinear().domain([startYear, endYear]).range([margin, width]);
@@ -59,19 +62,16 @@ async function loadScene() {
         d3.select(this).attr("class", currClass + " current");
 
         const country = d3.select(this).attr("country");
-        // document.querySelector('.card-title').innerText = `${country}`;
         let sum = 0;
         d.forEach(docs => { sum += docs.y });
         const averageDocs = (sum / d.length);
-        // document.querySelector('.card-text').innerHTML = `
-        // <p>The country <strong>${country}</strong> has expenditure of <strong>$${d[0].y}</strong> 
-        // in year <strong>${d[0].x}</strong> and <strong>$${d[15].y}</strong> in <strong>${d[15].x}</strong>
-        // which implies ${average > 0 ? 'increase' : 'decrease'} of <strong>${average.toFixed(2)}</strong> percentage<p>`;
+        document.querySelector('.sidenav').innerHTML = `
+        <p>The country <strong>${country}</strong> has on average ${averageDocs.toFixed(2)} doctors overs years.</div>`;
 
         const xVal = (d) => { return xScale(d.x); };
         const yVal = (d) => { return yScale(d.y); };
 
-        d3.select(".tooltip").transition().duration(100).style("opacity", .9)
+        d3.select(".tooltip").transition().duration(100).style("opacity", .9);
         d3.select(".tooltip")
             .html(`<div>${country} has on average ${averageDocs.toFixed(2)} doctors overs years.</div>`)
             .style("top", (d3.event.pageY + 20) + "px")
@@ -97,14 +97,9 @@ async function loadScene() {
         var currClass = d3.select(this).attr("class");
         var prevClass = currClass.substring(0, currClass.length - 8);
         d3.select(this).attr("class", prevClass);
-        
-        // const average = ((worldExpenditureEndYear - worldExpenditureStartYear) / worldExpenditureStartYear) * 100;
-        // document.querySelector('.card-title').innerText = `World`;
-        // document.querySelector('.card-text').innerHTML = `
-        // <p><strong>World</strong> has expenditure of <strong>${worldExpenditureStartYear.toFixed(2)}</strong> 
-        // in year <strong>2000</strong> and <strong>$${worldExpenditureEndYear.toFixed(2)}</strong> in <strong>2015</strong>
-        // which implies ${average > 0 ? 'increase' : 'decrease'} of <strong>${average.toFixed(2)}</strong> percentage</p>`;
+        document.querySelector('.sidenav').innerHTML = `<p>${healthWorkforce[healthWorkforceCategory]} by number and per 10,000 population per year per country.</p>`;
         chart.selectAll("circle").remove();
+        d3.select(".tooltip").style("opacity", 0);
     };
 
     const chart = d3.select("#scene")
@@ -192,12 +187,7 @@ async function loadScene() {
         .attr("transform", "rotate(-90)")
         .text("Doctors");
 
-    // document.querySelector('.card-title').innerText = `World`;
-    // const average = ((worldExpenditureEndYear - worldExpenditureStartYear) / worldExpenditureStartYear) * 100;
-    // document.querySelector('.card-text').innerHTML = `
-    //     <p><strong>World</strong> has expenditure of <strong>${worldExpenditureStartYear.toFixed(2)}</strong> 
-    //     in year <strong>2000</strong> and <strong>$${worldExpenditureEndYear.toFixed(2)}</strong> in <strong>2015</strong>
-    //     which implies ${average > 0 ? 'increase' : 'decrease'} of <strong>${average.toFixed(2)}</strong> percentage</p>`;
+    document.querySelector('.sidenav').innerHTML = `<p>${healthWorkforce[healthWorkforceCategory]} by number and per 10,000 population per year per country.</p>`;
 
 }
 
@@ -253,12 +243,14 @@ const getMinMaxData = (medicalProffesionalsByCountries, category) => {
     const keys = Object.keys(medicalProffesionalsByCountries)
     keys.forEach((key) => {
         medicalProffesionalsByCountries[key].forEach((data) => {
-            if (data.year > endYear) {
-                endYear = data.year;
-            }
+            if (data[category]) {
+                if (data.year > endYear) {
+                    endYear = data.year;
+                }
 
-            if (data.year < startYear) {
-                startYear = data.year;
+                if (data.year < startYear) {
+                    startYear = data.year;
+                }
             }
 
             if (data[category] > maxDoctors) {
